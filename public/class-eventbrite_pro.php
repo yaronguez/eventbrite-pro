@@ -16,8 +16,7 @@
  * If you're interested in introducing administrative or dashboard
  * functionality, then refer to `class-eventbrite_pro-admin.php`
  *
- * TODO: Rename this class to a proper name for your plugin.
- *
+  *
  * @package Eventbrite_Pro
  * @author  Yaron Guez <yaron@trestian.com>
  */
@@ -33,7 +32,6 @@ class Eventbrite_Pro {
 	const VERSION = '0.0.1';
 
 	/**
-	 * TODO - Rename "plugin-name" to the name your your plugin
 	 *
 	 * Unique identifier for your plugin.
 	 *
@@ -71,15 +69,16 @@ class Eventbrite_Pro {
 		// Activate plugin when new blog is added
 		add_action( 'wpmu_new_blog', array( $this, 'activate_new_site' ) );
 
-		// Load public-facing style sheet and JavaScript.
-		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_styles' ) );
-		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 
 		/* Define custom functionality.
 		 * Refer To http://codex.wordpress.org/Plugin_API#Hooks.2C_Actions_and_Filters
 		 */
-		add_action( 'TODO', array( $this, 'action_method_name' ) );
-		add_filter( 'TODO', array( $this, 'filter_method_name' ) );
+		//add_action( 'TODO', array( $this, 'action_method_name' ) );
+		//add_filter( 'TODO', array( $this, 'filter_method_name' ) );
+
+		//Load shortcodes
+		add_shortcode( 'eventbrite_list', array( &$this, 'render_eventbrite_list' ) );
+
 
 	}
 
@@ -267,7 +266,7 @@ class Eventbrite_Pro {
 	 * @since    1.0.0
 	 */
 	public function enqueue_styles() {
-		wp_enqueue_style( $this->plugin_slug . '-plugin-styles', plugins_url( 'assets/css/public.css', __FILE__ ), array(), self::VERSION );
+
 	}
 
 	/**
@@ -303,6 +302,68 @@ class Eventbrite_Pro {
 	 */
 	public function filter_method_name() {
 		// TODO: Define your filter hook callback here
+	}
+
+	public function render_eventbrite_list($atts)
+	{
+		// Extract the attributes
+		extract(shortcode_atts(array(
+			'calendar' => true
+		), $atts));
+
+		if($calendar == 'false' || $calendar == 'no')
+			$calendar = false;
+
+		// Load public-facing style sheet and JavaScript.
+		//add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_styles' ) );
+		//add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+		wp_enqueue_style( $this->plugin_slug . '-plugin-styles', plugins_url( 'assets/css/public.css', __FILE__ ), array(), self::VERSION );
+
+
+		//Get API key
+		$options = get_option('eventbrite_pro_options');
+		$api_key = $options['api_key'];
+		$email = $options['email'];
+
+		if(strlen($api_key) == 0)
+		{
+			return '<p>' . __('Please enter an Eventbrite API Key under Eventbrite Pro settings.') . '</p>';
+		}
+
+		if(strlen($email) == 0)
+		{
+			return '<p>' . __('Please enter an Eventbrite Email Address under Eventbrite Pro settings.') . '</p>';
+		}
+
+		//load the API
+		require_once( EVENTBRITE_PRO_PLUGIN_PATH . 'includes/eventbrite_api.php' );
+
+		$eb_client = new Eventbrite(array('app_key'=>$api_key));
+
+
+
+
+		try {
+			$events = $eb_client->user_list_events(array('user'=>$email));
+			$event_rows = $eb_client->eventList($events);
+		} catch ( Exception $e ) {
+			return __('Eventbrite Error: ', $this->plugin_slug) . ' ' . $e->getMessage();
+		}
+
+
+
+		$event_calendar = '';
+		if($calendar && isset($events->events[0]))
+		{
+			$event_calendar = $eb_client->calendarWidget($events->events[0]->event);
+		}
+
+
+		ob_start();
+		include_once(EVENTBRITE_PRO_PLUGIN_PATH . 'public/views/eventbrite_list.php');
+		return ob_get_clean();
+
+
 	}
 
 }

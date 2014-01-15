@@ -61,9 +61,6 @@ class Eventbrite_Pro_Admin {
 		/*
 		 * Call $plugin_slug from public plugin class.
 		 *
-		 * TODO:
-		 *
-		 * - Rename "Plugin_Name" to the name of your initial plugin class
 		 *
 		 */
 		$plugin = Eventbrite_Pro::get_instance();
@@ -86,8 +83,8 @@ class Eventbrite_Pro_Admin {
 		 * Read more about actions and filters:
 		 * http://codex.wordpress.org/Plugin_API#Hooks.2C_Actions_and_Filters
 		 */
-		add_action( 'TODO', array( $this, 'action_method_name' ) );
-		add_filter( 'TODO', array( $this, 'filter_method_name' ) );
+		add_action( 'admin_init', array( $this, 'plugin_admin_init' ) );
+		//add_filter( 'TODO', array( $this, 'filter_method_name' ) );
 
 	}
 
@@ -100,14 +97,6 @@ class Eventbrite_Pro_Admin {
 	 */
 	public static function get_instance() {
 
-		/*
-		 * TODO :
-		 *
-		 * - Decomment following lines if the admin class should only be available for super admins
-		 */
-		/* if( ! is_super_admin() ) {
-			return;
-		} */
 
 		// If the single instance hasn't been set, set it now.
 		if ( null == self::$instance ) {
@@ -120,9 +109,7 @@ class Eventbrite_Pro_Admin {
 	/**
 	 * Register and enqueue admin-specific style sheet.
 	 *
-	 * TODO:
 	 *
-	 * - Rename "Plugin_Name" to the name your plugin
 	 *
 	 * @since     1.0.0
 	 *
@@ -144,9 +131,7 @@ class Eventbrite_Pro_Admin {
 	/**
 	 * Register and enqueue admin-specific JavaScript.
 	 *
-	 * TODO:
 	 *
-	 * - Rename "Plugin_Name" to the name your plugin
 	 *
 	 * @since     1.0.0
 	 *
@@ -179,12 +164,7 @@ class Eventbrite_Pro_Admin {
 		 *
 		 *        Administration Menus: http://codex.wordpress.org/Administration_Menus
 		 *
-		 * TODO:
 		 *
-		 * - Change 'Page Title' to the title of your plugin admin page
-		 * - Change 'Menu Text' to the text for menu item for the plugin settings page
-		 * - Change 'manage_options' to the capability you see fit
-		 *   For reference: http://codex.wordpress.org/Roles_and_Capabilities
 		 */
 		$this->plugin_screen_hook_suffix = add_options_page(
 			__( 'Eventbrite Pro Settings', $this->plugin_slug ),
@@ -230,8 +210,58 @@ class Eventbrite_Pro_Admin {
 	 *
 	 * @since    1.0.0
 	 */
-	public function action_method_name() {
-		// TODO: Define your action hook callback here
+	public function plugin_admin_init() {
+		register_setting( 'eventbrite_pro_options', 'eventbrite_pro_options', array($this, 'eventbrite_pro_options_validate') );
+		add_settings_section('eventbrite_api_options', 'API Settings', array($this, 'eventbrite_section_text'), $this->plugin_slug);
+		add_settings_field('eventbrite_api_key', 'API Key', array($this, 'eventbrite_api_setting'), $this->plugin_slug, 'eventbrite_api_options');
+		add_settings_field('eventbrite_email', 'Eventbrite Email', array($this, 'eventbrite_email_setting'), $this->plugin_slug, 'eventbrite_api_options');
+	}
+
+	public function eventbrite_section_text()
+	{
+		?>
+		<p><?php _e('To use Eventbrite Pro you will need an API Key.  You can get one by',$this->plugin_slug);?>
+			<a href="http://www.eventbrite.com/api/key/" target="_blank" title="Get Eventbrite API Key"><?php _e('clicking here', $this->plugin_slug);?>.</a></p>
+		<?php
+	}
+
+	public function eventbrite_api_setting()
+	{
+		$options = get_option('eventbrite_pro_options');
+		?>
+		<input id="eventbrite_api_setting" name="eventbrite_pro_options[api_key]" size="40" type="text" value="<?php echo $options['api_key'];?>"/>
+		<?php
+	}
+
+	public function eventbrite_email_setting()
+	{
+		$options = get_option('eventbrite_pro_options');
+		?>
+		<input id="eventbrite_email_setting" name="eventbrite_pro_options[email]" size="40" type="email" value="<?php echo $options['email'];?>"/>
+	<?php
+	}
+
+	public function eventbrite_pro_options_validate($input)
+	{
+		$options = get_option('eventbrite_pro_options');
+		$api_key = strip_tags(stripslashes(trim($input['api_key'])));
+		/*if(strlen($api_key) == 0)
+		{
+			add_settings_error('eventbrite_api_key','api_key_error',__('An API Key is required to use Eventbrite Pro',$this->plugin_slug),'error');
+		}
+		else*/
+			$options['api_key'] = $api_key;
+
+		$email = strip_tags(stripslashes(trim($input['email'])));
+		/*if(strlen($email) == 0)
+		{
+			add_settings_error('eventbrite_email','email_error',__('Your Eventbrite email address is required to use Eventbrite Pro',$this->plugin_slug),'error');
+		}
+		else*/
+			$options['email'] = $email;
+		return $options;
+
+
 	}
 
 	/**

@@ -1,1 +1,47 @@
 /* This stylesheet is used to style the public-facing components of the plugin. */
+.eb-container
+{
+    *zoom: 1;
+}
+
+.eb-container:before,
+.eb-container:after {
+    display: table;
+    line-height: 0;
+    content: "";
+}
+
+.eb-container:after {
+    clear: both;
+}
+
+.eb-event-calendar
+{
+    float: right;
+    overflow: hidden;
+}
+.eb_calendar_widget
+{
+    width: 195px;
+    text-align: center;
+    position: relative;
+    top: -40px;
+}
+.eb_event_list_item{
+    margin-bottom: 15px;
+
+}
+.eb_event_list_title{
+    display: block;
+
+}
+.eb_event_list_date, .eb_event_list_time {
+    font-weight: bold;
+    font-size: 0.8em;
+}
+
+.eb_event_list_location{
+    font-size: 0.8em;
+    font-style: italic;
+
+}
