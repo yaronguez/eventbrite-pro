@@ -14,4 +14,5 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 
-// TODO: Define uninstall functionality here
+delete_option('eventbrite_pro_options');
+delete_transient('eventbrite_events');

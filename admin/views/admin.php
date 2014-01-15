@@ -15,7 +15,6 @@
 
 <div class="wrap">
 
-	<?php screen_icon(); ?>
 	<h2><?php echo esc_html( get_admin_page_title() ); ?></h2>
 
 
@@ -23,7 +22,7 @@
 		<?php settings_fields('eventbrite_pro_options'); ?>
 		<?php do_settings_sections($this->plugin_slug); ?>
 
-		<input name="submit" type="submit" class="button button-primary" value="<?php esc_attr_e('Save Changes'); ?>" />
+		<input name="eventbrite_pro_options[submit]" type="submit" class="button button-primary" value="<?php esc_attr_e('Save Changes'); ?>" />
 	</form>
 
 </div>

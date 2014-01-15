@@ -319,48 +319,63 @@ class Eventbrite_Pro {
 		//add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		wp_enqueue_style( $this->plugin_slug . '-plugin-styles', plugins_url( 'assets/css/public.css', __FILE__ ), array(), self::VERSION );
 
-
-		//Get API key
-		$options = get_option('eventbrite_pro_options');
-		$api_key = $options['api_key'];
-		$email = $options['email'];
-
-		if(strlen($api_key) == 0)
+		//see if events are cached
+		if(false === ($events = get_transient('eventbrite_events')))
 		{
-			return '<p>' . __('Please enter an Eventbrite API Key under Eventbrite Pro settings.') . '</p>';
+			//Get API key
+			$options = get_option('eventbrite_pro_options');
+			$api_key = $options['api_key'];
+			$email = $options['email'];
+			$cache_time = $options['cache'];
+
+			if(strlen($api_key) == 0)
+			{
+				return '<p>' . __('Please enter an Eventbrite API Key under Eventbrite Pro settings.') . '</p>';
+			}
+
+			if(strlen($email) == 0)
+			{
+				return '<p>' . __('Please enter an Eventbrite Email Address under Eventbrite Pro settings.') . '</p>';
+			}
+
+			if(!is_numeric($cache_time))
+			{
+				$cache_time = 3;
+			}
+
+
+
+			//load the API
+			require_once( EVENTBRITE_PRO_PLUGIN_PATH . 'includes/eventbrite_api.php' );
+
+			$eb_client = new Eventbrite(array('app_key'=>$api_key));
+
+			try {
+				$events = $eb_client->user_list_events(array('user'=>$email));
+				$events = $eb_client->sanitizeEvents($events);
+			} catch ( Exception $e ) {
+				return __('Eventbrite Error: ', $this->plugin_slug) . ' ' . $e->getMessage();
+			}
+
+			//cache results
+			set_transient('eventbrite_events',$events,$cache_time*60*60);
 		}
-
-		if(strlen($email) == 0)
-		{
-			return '<p>' . __('Please enter an Eventbrite Email Address under Eventbrite Pro settings.') . '</p>';
-		}
-
-		//load the API
-		require_once( EVENTBRITE_PRO_PLUGIN_PATH . 'includes/eventbrite_api.php' );
-
-		$eb_client = new Eventbrite(array('app_key'=>$api_key));
-
-
-
-
-		try {
-			$events = $eb_client->user_list_events(array('user'=>$email));
-			$event_rows = $eb_client->eventList($events);
-		} catch ( Exception $e ) {
-			return __('Eventbrite Error: ', $this->plugin_slug) . ' ' . $e->getMessage();
-		}
-
-
 
 		$event_calendar = '';
-		if($calendar && isset($events->events[0]))
+		if($calendar && isset($events[0]))
 		{
-			$event_calendar = $eb_client->calendarWidget($events->events[0]->event);
+			//load the API if not already loaded
+			require_once( EVENTBRITE_PRO_PLUGIN_PATH . 'includes/eventbrite_api.php' );
+
+			$event_calendar = Eventbrite::calendarWidget($events[0]);
 		}
 
 
 		ob_start();
-		include_once(EVENTBRITE_PRO_PLUGIN_PATH . 'public/views/eventbrite_list.php');
+		if(file_exists(get_stylesheet_directory() . '/template-eventbrite_list.php'))
+			include_once(get_stylesheet_directory() . '/template-eventbrite_list.php');
+		else
+			include_once(EVENTBRITE_PRO_PLUGIN_PATH . 'public/views/template-eventbrite_list.php');
 		return ob_get_clean();
 
 

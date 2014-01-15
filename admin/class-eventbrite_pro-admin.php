@@ -215,6 +215,7 @@ class Eventbrite_Pro_Admin {
 		add_settings_section('eventbrite_api_options', 'API Settings', array($this, 'eventbrite_section_text'), $this->plugin_slug);
 		add_settings_field('eventbrite_api_key', 'API Key', array($this, 'eventbrite_api_setting'), $this->plugin_slug, 'eventbrite_api_options');
 		add_settings_field('eventbrite_email', 'Eventbrite Email', array($this, 'eventbrite_email_setting'), $this->plugin_slug, 'eventbrite_api_options');
+		add_settings_field('eventbrite_cache', 'Cache Length', array($this, 'eventbrite_cache_setting'), $this->plugin_slug, 'eventbrite_api_options');
 	}
 
 	public function eventbrite_section_text()
@@ -241,24 +242,67 @@ class Eventbrite_Pro_Admin {
 	<?php
 	}
 
+	public function eventbrite_cache_setting()
+	{
+		$options = get_option('eventbrite_pro_options');
+		$html = '<select id="eventbrite_cache_setting" name="eventbrite_pro_options[cache]">';
+		if(!isset($options['cache']))
+			$html .= '<option value="default">Select a cache length...</option>';
+		$html .= '<option value="1"' . selected( $options['cache'], '1', false) . '>1 Hours</option>';
+		$html .= '<option value="3"' . selected( $options['cache'], '3', false) . '>3 Hours</option>';
+		$html .= '<option value="6"' . selected( $options['cache'], '6', false) . '>6 Hours</option>';
+		$html .= '<option value="12"' . selected( $options['cache'], '12', false) . '>12 Hours</option>';
+		$html .= '<option value="24"' . selected( $options['cache'], '24', false) . '>1 Day</option>';
+		$html .= '<option value="72"' . selected( $options['cache'], '72', false) . '>3 Days</option>';
+		$html .= '<option value="168"' . selected( $options['cache'], '168', false) . '>1 Week</option>';
+		$html .= '</select>';
+		if(isset($options['cache']))
+			$html .= '<input type="submit" class="button" name="eventbrite_pro_options[reset_cache]" value="' . __('Clear Cache', $this->plugin_slug) . '"/>';
+		$html .= '<p class="description">How often do you want to check for new events? Eventbrite may terminate your API Key you if you abuse their API.</p>';
+		echo $html;
+
+	}
+
 	public function eventbrite_pro_options_validate($input)
 	{
 		$options = get_option('eventbrite_pro_options');
-		$api_key = strip_tags(stripslashes(trim($input['api_key'])));
-		/*if(strlen($api_key) == 0)
-		{
-			add_settings_error('eventbrite_api_key','api_key_error',__('An API Key is required to use Eventbrite Pro',$this->plugin_slug),'error');
-		}
-		else*/
-			$options['api_key'] = $api_key;
 
-		$email = strip_tags(stripslashes(trim($input['email'])));
-		/*if(strlen($email) == 0)
+		if(isset($input['submit']))
 		{
-			add_settings_error('eventbrite_email','email_error',__('Your Eventbrite email address is required to use Eventbrite Pro',$this->plugin_slug),'error');
+			$api_key = strip_tags(stripslashes(trim($input['api_key'])));
+			if(strlen($api_key) == 0)
+			{
+				add_settings_error('eventbrite_api_key','api_key_error',__('An API Key is required to use Eventbrite Pro',$this->plugin_slug),'error');
+			}
+			else
+				$options['api_key'] = $api_key;
+
+			$email = strip_tags(stripslashes(trim($input['email'])));
+			if(strlen($email) == 0)
+			{
+				add_settings_error('eventbrite_email','email_error',__('Your Eventbrite email address is required to use Eventbrite Pro',$this->plugin_slug),'error');
+			}
+			else
+				$options['email'] = $email;
+
+			$cache = $input['cache'];
+			if(!is_numeric($cache) || $cache < 1)
+			{
+				add_settings_error('eventbrite_cache','cache_error',__('A cache of at least 1 hour is required.',$this->plugin_slug),'error');
+			}
+			elseif($options['cache'] != floatval($cache)) //only update the cache if it's different
+			{
+				$options['cache'] = floatval($cache);
+				delete_transient('eventbrite_events');
+			}
 		}
-		else*/
-			$options['email'] = $email;
+
+		if(isset($input['reset_cache']))
+		{
+			delete_transient('eventbrite_events');
+			add_settings_error('eventbrite_cache_clear','cache_clear',__('The events cache has been cleared.',$this->plugin_slug),'updated');
+		}
+
 		return $options;
 
 

@@ -248,6 +248,30 @@ class Eventbrite {
 		unset($_SESSION['EB_OAUTH_ACCESS_TOKEN']);
 	}
 
+	public static function sanitizeEvents($events)
+	{
+		if( !isset($events->events))
+			return array();
+
+		$results = array();
+		foreach($events->events as $event)
+		{
+			$new_event = $event->event;
+			$new_event->time = strtotime($event->start_date);
+			$new_event->venue_name = 'online';
+			if( isset($event->event->venue) && isset( $event->event->venue->name )){
+				$new_event->venue_name = $event->event->venue->name;
+			}
+			$results[] = $new_event;
+
+		}
+
+
+		return $results;
+
+
+	}
+
 	public static function eventListRow( $evnt ) {
 		$time = strtotime($evnt->start_date);
 		$venue_name = 'online';
@@ -331,6 +355,11 @@ class Eventbrite {
 
 	public static function calendarWidget( $evnt ) {
 		return '<div class="eb_calendar_widget"><iframe src="https://www.eventbrite.com/calendar-widget?eid=' . $evnt->id . '" frameborder="0" height="622" width="195" marginheight="0" marginwidth="0" scrolling="no" allowtransparency="true"></iframe></div>';
+	}
+
+	public static function calendarContents($event)
+	{
+		return file_get_contents('http://www.eventbrite.com/calendar-widget?eid=' . $event->id);
 	}
 
 	public static function countdownWidget( $evnt ) {
