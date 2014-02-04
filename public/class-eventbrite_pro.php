@@ -233,7 +233,11 @@ class Eventbrite_Pro {
 	 * @since    1.0.0
 	 */
 	private static function single_activate() {
-		// TODO: Define activation functionality here
+		add_option('eventbrite_pro_options',  array(
+			'api_key'=>'',
+			'email'=>'',
+			'cache'=> -1
+		));
 	}
 
 	/**

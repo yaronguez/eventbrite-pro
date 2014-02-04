@@ -2,7 +2,7 @@
 /**
  * Eventbrite Pro
  *
- * Displays and caches a list and widget calendar of your upcoming Eventbrite events
+ * Shortcode to display and cache a list and calendar of your upcoming Eventbrite events
  *
  * @package   Eventbrite_Pro
  * @author    Yaron Guez <yaron@trestian.com>
@@ -13,8 +13,8 @@
  * @wordpress-plugin
  * Plugin Name:       Eventbrite Pro
  * Plugin URI:        http://github.com/yaronguez/eventbrite-pro
- * Description:       Displays and caches a list and widget calendar of your upcoming Eventbrite events
- * Version:           0.0.1
+ * Description:       Shortcode to displays and cache a list and calendar of your upcoming Eventbrite events
+ * Version:           0.1.0
  * Author:            Yaron Guez
  * Author URI:        http://trestian.com
  * Text Domain:       eventbrite_pro

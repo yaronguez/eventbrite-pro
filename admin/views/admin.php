@@ -19,10 +19,11 @@
 
 
 	<form action="options.php" method="post">
-		<?php settings_fields('eventbrite_pro_options'); ?>
-		<?php do_settings_sections($this->plugin_slug); ?>
-
-		<input name="eventbrite_pro_options[submit]" type="submit" class="button button-primary" value="<?php esc_attr_e('Save Changes'); ?>" />
+		<?php
+			settings_fields('eventbrite_pro_option_group');
+			do_settings_sections($this->plugin_slug);
+			submit_button(__('Save Changes', $this->plugin_slug),'primary','eventbrite_pro_options[submit]');
+		?>
 	</form>
 
 </div>

@@ -78,13 +78,17 @@ class Eventbrite_Pro_Admin {
 		add_filter( 'plugin_action_links_' . $plugin_basename, array( $this, 'add_action_links' ) );
 
 		/*
-		 * Define custom functionality.
-		 *
-		 * Read more about actions and filters:
-		 * http://codex.wordpress.org/Plugin_API#Hooks.2C_Actions_and_Filters
+		 * Registers settings if on options page
 		 */
-		add_action( 'admin_init', array( $this, 'plugin_admin_init' ) );
-		//add_filter( 'TODO', array( $this, 'filter_method_name' ) );
+		if ( ! empty ( $GLOBALS['pagenow'] )
+			and ( 'options-general.php' === $GLOBALS['pagenow']
+				or 'options.php' === $GLOBALS['pagenow']
+			)
+		)
+		{
+			add_action( 'admin_init', array( $this, 'eventbrite_register_settings' ) );
+		}
+
 
 	}
 
@@ -201,24 +205,95 @@ class Eventbrite_Pro_Admin {
 
 	}
 
-	/**
-	 * NOTE:     Actions are points in the execution of a page or process
-	 *           lifecycle that WordPress fires.
-	 *
-	 *           Actions:    http://codex.wordpress.org/Plugin_API#Actions
-	 *           Reference:  http://codex.wordpress.org/Plugin_API/Action_Reference
-	 *
-	 * @since    1.0.0
-	 */
-	public function plugin_admin_init() {
-		register_setting( 'eventbrite_pro_options', 'eventbrite_pro_options', array($this, 'eventbrite_pro_options_validate') );
-		add_settings_section('eventbrite_api_options', 'API Settings', array($this, 'eventbrite_section_text'), $this->plugin_slug);
-		add_settings_field('eventbrite_api_key', 'API Key', array($this, 'eventbrite_api_setting'), $this->plugin_slug, 'eventbrite_api_options');
-		add_settings_field('eventbrite_email', 'Eventbrite Email', array($this, 'eventbrite_email_setting'), $this->plugin_slug, 'eventbrite_api_options');
-		add_settings_field('eventbrite_cache', 'Cache Length', array($this, 'eventbrite_cache_setting'), $this->plugin_slug, 'eventbrite_api_options');
+
+	public function eventbrite_register_settings()
+	{
+		$option_name = 'eventbrite_pro_options';
+
+		//fetch existing options
+		$option_values = get_option($option_name);
+
+		//set defaults
+		$default_values = array(
+			'api_key'=>'',
+			'email'=>'',
+			'cache'=> -1
+		);
+
+		//parse option values and discard the rest
+		$data = shortcode_atts($default_values, $option_values);
+
+
+		register_setting(
+			'eventbrite_pro_option_group',	 // Option Group ID
+			$option_name,		// Option Name
+			array(&$this, 'eventbrite_pro_options_validate') // Validation Callback
+		);
+
+		add_settings_section(
+			'eventbrite_api_options',	// Section ID
+			'API Settings', 		// Title
+			array(&$this, 'eventbrite_section_text'), //Render Section
+			$this->plugin_slug // Menu slug
+		);
+
+		add_settings_field(
+			'eventbrite_api_key', // Field ID
+			'API Key', // Label
+			array(&$this, 'eventbrite_render_text_field'), // Render field
+			$this->plugin_slug, 	// Menu slug
+			'eventbrite_api_options',	// Section ID
+			array(
+				'label_for' => 'label1', // Makes field clickable
+				'name'=>'api_key', // Field name key
+				'value'=>esc_attr($data['api_key']), // Field value
+				'option_name'=>$option_name, // Option name
+				'type'=>'text' // Input type
+			)
+		);
+
+		add_settings_field(
+			'eventbrite_email', // Field ID
+			'Eventbrite Email', // Label
+			array($this, 'eventbrite_render_text_field'), // Render field
+			$this->plugin_slug, // Menu slug
+			'eventbrite_api_options', //Section ID
+			array(
+				'label_for' => 'label2',
+				'name'=>'email',
+				'value'=>esc_attr($data['email']),
+				'option_name'=>$option_name,
+				'type'=>'email'
+			)
+		);
+
+		add_settings_field(
+			'eventbrite_cache',
+			'Cache Length',
+			array($this, 'eventbrite_cache_setting'),
+			$this->plugin_slug,
+			'eventbrite_api_options',
+			array
+			(
+				'label_for' => 'label3',
+				'name' 		=> 'cache',
+				'value' 	=> esc_attr($data['cache']),
+				'options' 	=> array(
+					'-1' => 'Select a cache length...',
+					'1' => '1 Hour',
+					'3'	 => '3 Hours',
+					'6'	 => '6 Hours',
+					'12' => '12 Hours',
+					'24' => '1 Day',
+					'72' => '3 Days',
+					'168'=> '1 Week'
+				),
+				'option_name' => $option_name
+			)
+		);
 	}
 
-	public function eventbrite_section_text()
+	function eventbrite_section_text()
 	{
 		?>
 		<p><?php _e('To use Eventbrite Pro you will need an API Key.  You can get one by',$this->plugin_slug);?>
@@ -226,46 +301,65 @@ class Eventbrite_Pro_Admin {
 		<?php
 	}
 
-	public function eventbrite_api_setting()
+	function eventbrite_render_text_field($args)
 	{
-		$options = get_option('eventbrite_pro_options');
-		?>
-		<input id="eventbrite_api_setting" name="eventbrite_pro_options[api_key]" size="40" type="text" value="<?php echo $options['api_key'];?>"/>
-		<?php
+		printf(
+			'<input name="%1$s[%2$s]" id="%3$s" value="%4$s" class="regular-text" type="%5$s">',
+			$args['option_name'],
+			$args['name'],
+			$args['label_for'],
+			$args['value'],
+			$args['type']
+		);
+
 	}
 
-	public function eventbrite_email_setting()
+	function eventbrite_render_dropdown($args)
 	{
-		$options = get_option('eventbrite_pro_options');
-		?>
-		<input id="eventbrite_email_setting" name="eventbrite_pro_options[email]" size="40" type="email" value="<?php echo $options['email'];?>"/>
-	<?php
+		printf(
+			'<select name="%1$s[%2$s]" id="%3$s">',
+			$args['option_name'],
+			$args['name'],
+			$args['label_for']
+		);
+
+		foreach($args['options'] as $val => $title)
+		{
+
+			printf(
+				'<option value="%1$s" %2$s>%3$s</option>',
+				$val,
+				selected($val, $args['value'], FALSE),
+				$title
+			);
+		}
+
+		echo '</select>';
 	}
 
-	public function eventbrite_cache_setting()
+	public function eventbrite_cache_setting($args)
 	{
-		$options = get_option('eventbrite_pro_options');
-		$html = '<select id="eventbrite_cache_setting" name="eventbrite_pro_options[cache]">';
-		if(!isset($options['cache']))
-			$html .= '<option value="default">Select a cache length...</option>';
-		$html .= '<option value="1"' . selected( $options['cache'], '1', false) . '>1 Hours</option>';
-		$html .= '<option value="3"' . selected( $options['cache'], '3', false) . '>3 Hours</option>';
-		$html .= '<option value="6"' . selected( $options['cache'], '6', false) . '>6 Hours</option>';
-		$html .= '<option value="12"' . selected( $options['cache'], '12', false) . '>12 Hours</option>';
-		$html .= '<option value="24"' . selected( $options['cache'], '24', false) . '>1 Day</option>';
-		$html .= '<option value="72"' . selected( $options['cache'], '72', false) . '>3 Days</option>';
-		$html .= '<option value="168"' . selected( $options['cache'], '168', false) . '>1 Week</option>';
-		$html .= '</select>';
-		if(isset($options['cache']))
-			$html .= '<input type="submit" class="button" name="eventbrite_pro_options[reset_cache]" value="' . __('Clear Cache', $this->plugin_slug) . '"/>';
-		$html .= '<p class="description">How often do you want to check for new events? Eventbrite may terminate your API Key you if you abuse their API.</p>';
-		echo $html;
+		if($args['value'] != -1)
+		{
+			unset($args['options']['-1']);
+		}
+		$this->eventbrite_render_dropdown($args);
+
+
+		if($args['value'] != -1)
+			echo '<input type="submit" class="button" name="eventbrite_pro_options[reset_cache]" value="' . __('Clear Cache', $this->plugin_slug) . '"/>';
+		echo '<p class="description">How often do you want to check for new events? Eventbrite may terminate your API Key you if you abuse their API.</p>';
 
 	}
 
 	public function eventbrite_pro_options_validate($input)
 	{
 		$options = get_option('eventbrite_pro_options');
+
+		if(!is_array($input))
+		{
+			return $options;
+		}
 
 		if(isset($input['submit']))
 		{
@@ -277,20 +371,22 @@ class Eventbrite_Pro_Admin {
 			else
 				$options['api_key'] = $api_key;
 
+
 			$email = strip_tags(stripslashes(trim($input['email'])));
-			if(strlen($email) == 0)
+			if(!isset($input['email']) || strlen($email) == 0)
 			{
 				add_settings_error('eventbrite_email','email_error',__('Your Eventbrite email address is required to use Eventbrite Pro',$this->plugin_slug),'error');
 			}
 			else
 				$options['email'] = $email;
 
+
 			$cache = $input['cache'];
 			if(!is_numeric($cache) || $cache < 1)
 			{
 				add_settings_error('eventbrite_cache','cache_error',__('A cache of at least 1 hour is required.',$this->plugin_slug),'error');
 			}
-			elseif($options['cache'] != floatval($cache)) //only update the cache if it's different
+			elseif(!isset($options['cache']) || ($options['cache'] != floatval($cache))) //only update the cache if it's different
 			{
 				$options['cache'] = floatval($cache);
 				delete_transient('eventbrite_events');

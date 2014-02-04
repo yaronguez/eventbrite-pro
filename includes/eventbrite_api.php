@@ -257,7 +257,7 @@ class Eventbrite {
 		foreach($events->events as $event)
 		{
 			$new_event = $event->event;
-			$new_event->time = strtotime($event->start_date);
+			$new_event->time = strtotime($event->event->start_date);
 			$new_event->venue_name = 'online';
 			if( isset($event->event->venue) && isset( $event->event->venue->name )){
 				$new_event->venue_name = $event->event->venue->name;
@@ -265,7 +265,6 @@ class Eventbrite {
 			$results[] = $new_event;
 
 		}
-
 
 		return $results;
 
