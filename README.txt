@@ -1,29 +1,26 @@
-=== TODO: Plugin Name ===
-Contributors: (this should be a list of wordpress.org userids)
-Donate link: http://example.com/
-Tags: comments, spam
-Requires at least: 3.5.1
+=== Eventbrite Pro ===
+Contributors: yguez
+Donate link: PayPal - info@trestian.com
+Tags: eventbrite, calendar, events, widget, api
+Requires at least: 3.0
 Tested up to: 3.6
 Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Here is a short description of the plugin.  This should be no more than 150 characters.  No markup here.
+Shortcode to display a list and calendar of Eventbrite events
 
 == Description ==
 
-This is the long description.  No limit, and you can use Markdown (as well as in the following sections).
+This WordPress shortcode, [eventbrite_list], uses the Eventbrite API to display your upcoming Eventbrite events in a list as well as an
+optional calendar.
 
-For backwards compatibility, if this section is missing, the full length of the short description will be used, and
-Markdown parsed.
+It will cache your event data to increase site performance and to prevent API abuse.  You can choose the cache duration
+and manually clear the cache as needed.  You can also easily override the template used to list your events.  See the
+FAQ for more details.
 
 A few notes about the sections above:
 
-*   "Contributors" is a comma separated list of wp.org/wp-plugins.org usernames
-*   "Tags" is a comma separated list of tags that apply to the plugin
-*   "Requires at least" is the lowest version that the plugin will work on
-*   "Tested up to" is the highest version that you've *successfully used to test the plugin*. Note that it might work on
-higher versions... this is just the highest one you've verified.
 *   Stable tag should indicate the Subversion "tag" of the latest stable version, or "trunk," if you use `/trunk/` for
 stable.
 
@@ -37,16 +34,26 @@ that lacks those changes -- as long as the trunk's `readme.txt` points to the co
     If no stable tag is provided, it is assumed that trunk is stable, but you should specify "trunk" if that's where
 you put the stable version, in order to eliminate any doubt.
 
+==== Usage ====
+On first use, visit the plugin settings page and set your Eventbrite API key, email and cache duration.
+You can get your API key at: http://www.eventbrite.com/api/key/
+
+Events loaded via the API are cached (see the FAQ).  You can change the cache duration in the settings page.
+You can also manually clear the cache at any point by clicking "Clear Page" from the settings page.
+
+To display a list of your events, simply use the shortcode [eventbrite_list].  If you don't wish to display the calendar
+simply add the attribute calendar="false", i.e. [eventbrite_list calendar="false"].
+
+If you'd like to override the template used to list your events in order to add your own markup and CSS class names,
+simply copy template-eventbrite_list.php to your theme directory.  Then you may make any changes you wish to the copied
+template file without breaking future upgrades.  Do NOT modify the original template file.
+
 == Installation ==
-
-This section describes how to install the plugin and get it working.
-
-e.g.
 
 = Using The WordPress Dashboard =
 
 1. Navigate to the 'Add New' in the plugins dashboard
-2. Search for 'plugin-name'
+2. Search for 'eventbrite-pro'
 3. Click 'Install Now'
 4. Activate the plugin on the Plugin dashboard
 
@@ -54,27 +61,70 @@ e.g.
 
 1. Navigate to the 'Add New' in the plugins dashboard
 2. Navigate to the 'Upload' area
-3. Select `plugin-name.zip` from your computer
+3. Select `eventbrite-pro.zip` from your computer
 4. Click 'Install Now'
 5. Activate the plugin in the Plugin dashboard
 
 = Using FTP =
 
-1. Download `plugin-name.zip`
-2. Extract the `plugin-name` directory to your computer
-3. Upload the `plugin-name` directory to the `/wp-content/plugins/` directory
+1. Download `eventbrite-pro.zip`
+2. Extract the `eventbrite-pro-` directory to your computer
+3. Upload the `eventbrite-pro` directory to the `/wp-content/plugins/` directory
 4. Activate the plugin in the Plugin dashboard
 
 
 == Frequently Asked Questions ==
 
-= A question that someone might have =
+= This doesn't work! =
 
-An answer to that question.
+That's not a question.  No, but seriously, this is the first plugin I've written from scratch so if any bugs slipped in
+then I'm really sorry about that.  Please let me know and I'll fix it asap.
 
-= What about foo bar? =
+= Where's the widget? =
+I haven't gotten around to adding a native widget yet.  But it's really easy to insert a shortcode in a widget.  Just
+use a widget like Black Studio TinyMCE Widget and add the shortcode there.
 
-Answer to foo bar dilemma.
+= Can I change the way my events are displayed? =
+Absolutely!  I used a lot of CSS class names which you can style away with your own stylesheet.  If that's not enough,
+then take a look in the public/views folder of the plugin.  There's a file in there called template-eventbrite_list.php.
+Do NOT modify this file.  If you do you'll lose all your changes when you upgrade the plugin.  Instead, just COPY
+it to your theme directory.  The plugin will automatically check there first and use that template instead. Smart, huh?
+
+Feel free to modify the markup as you want, add classes...go wild!
+
+= What is cache duration all about? =
+
+This plugin uses the Eventbrite API to load your events from the Eventbrite website.  Every time you call the API it has
+to contact the Eventbrite server.  This adds lag to page load.  If you call the API too many times then Eventbrite might
+cut you off.  Fortunately, events don't change very often so it's not necessary to contact Eventbrite every time someone
+views your events page.
+
+The first time someone visits a page or post with this shortcode, the plugin will contact Eventbrite using the API, load
+any upcoming events and store it in your database.  The next time someone visits this page, the plugin will display
+ the events that are already in the database.  It will load much faster and not require another call to Eventbrite.
+
+ After a few hours or days, depending on what you set in the plugin settings, the cache will expire and the next visit to
+ this shortcode will load the latest events from Eventbrite.
+
+ = What if I create a new event and want it to show up right away? =
+ Simply click the "clear cache" button in the settings page.  Easy, huh?
+
+ = Is the calendar cached as well? =
+ Unfortunately, no.  The calendar is displayed with an IFRAME so caching it wouldn't work very well.  A
+ caching plugin like W3 Total Cache probably caches this...I think.
+
+= Why doesn't the plugin do X ? =
+Because it's my first plugin and I wanted to get something up and running first.  I'll add more functionality and API
+integration as I have the time.  I do have a day job though....http://www.trestian.com
+
+= What custom hooks and filters do you use? =
+See previous question.
+
+= But I NEED it to do X! =
+http://www.trestian.com
+
+= You're the man!  How can I buy you a drink? =
+Why, thank you very much! Feel free to PayPal donations to info---at---trestian---dot---com
 
 == Screenshots ==
 
@@ -86,26 +136,9 @@ directory take precedence. For example, `/assets/screenshot-1.png` would win ove
 
 == Changelog ==
 
-= 1.0 =
-* A change since the previous version.
-* Another change.
+= 0.1.1 =
+* We are live baby!
 
-= 0.5 =
-* List versions from most recent at top to oldest at bottom.
-
-== Upgrade Notice ==
-
-= 1.0 =
-Upgrade notices describe the reason a user should upgrade.  No more than 300 characters.
-
-= 0.5 =
-This version fixes a security related bug.  Upgrade immediately.
-
-== Arbitrary section ==
-
-You may provide arbitrary sections, in the same format as the ones above.  This may be of use for extremely complicated
-plugins where more information needs to be conveyed that doesn't fit into the categories of "description" or
-"installation."  Arbitrary sections will be shown below the built-in sections outlined above.
 
 == A brief Markdown Example ==
 
