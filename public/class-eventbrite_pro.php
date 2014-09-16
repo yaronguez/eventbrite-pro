@@ -315,7 +315,7 @@ class Eventbrite_Pro {
 			'calendar' => true
 		), $atts));
 
-		if($calendar == 'false' || $calendar == 'no')
+		if($calendar !== true && ($calendar == 'false' || $calendar == 'no'))
 			$calendar = false;
 
 		// Load public-facing style sheet and JavaScript.

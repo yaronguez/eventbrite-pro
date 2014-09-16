@@ -77,6 +77,9 @@ class Eventbrite_Pro_Admin {
 		$plugin_basename = plugin_basename( plugin_dir_path( __DIR__ ) . $this->plugin_slug . '.php' );
 		add_filter( 'plugin_action_links_' . $plugin_basename, array( $this, 'add_action_links' ) );
 
+		// Clear the cache when w3tc empties its cache
+		add_action('w3tc_pgcache_flush', array($this, 'eventbrite_pro_clear_cache'));
+
 		/*
 		 * Registers settings if on options page
 		 */
@@ -389,32 +392,22 @@ class Eventbrite_Pro_Admin {
 			elseif(!isset($options['cache']) || ($options['cache'] != floatval($cache))) //only update the cache if it's different
 			{
 				$options['cache'] = floatval($cache);
-				delete_transient('eventbrite_events');
+				$this->eventbrite_pro_clear_cache();
 			}
 		}
 
 		if(isset($input['reset_cache']))
 		{
-			delete_transient('eventbrite_events');
+			$this->eventbrite_pro_clear_cache();
 			add_settings_error('eventbrite_cache_clear','cache_clear',__('The events cache has been cleared.',$this->plugin_slug),'updated');
 		}
 
 		return $options;
-
-
 	}
 
-	/**
-	 * NOTE:     Filters are points of execution in which WordPress modifies data
-	 *           before saving it or sending it to the browser.
-	 *
-	 *           Filters: http://codex.wordpress.org/Plugin_API#Filters
-	 *           Reference:  http://codex.wordpress.org/Plugin_API/Filter_Reference
-	 *
-	 * @since    1.0.0
-	 */
-	public function filter_method_name() {
-		// TODO: Define your filter hook callback here
+	public function eventbrite_pro_clear_cache()
+	{
+		delete_transient('eventbrite_events');
 	}
 
 }
